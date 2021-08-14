@@ -16,6 +16,7 @@ class CreatePublicEntitiesTable extends Migration
         Schema::create('public_entities', function (Blueprint $table) {
             $table->id();
             $table->string('description');
+            // TODO: add geolocations
             $table->timestamps();
         });
     }
