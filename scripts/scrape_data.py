@@ -32,17 +32,19 @@ class PoliticianScraper:
     def get_presidential_visits(self, date) -> list:
         response = requests.post(
             f"{self.DOMAINS['PRESIDENT']}{self.SERVICES['PRESIDENT']}",
-            data={'valorCaja1': date,}
+            data={'valorCaja1': date, }
         )
         soup = BeautifulSoup(response.text, 'html.parser')
         row_count = self.__get_number_from_string(soup.span.text)
         rows = soup.find_all('tr')
-        assert(len(rows) - 1 == row_count) # The first rows contain a text with the number of rows
+
+        # The first rows contain a text with the number of rows
+        assert(len(rows) - 1 == row_count)
 
         meetings = []
         for row in rows:
             cells = row.find_all('td')
-            if len(cells) != 11: # The number of fields...
+            if len(cells) != 11:  # The number of fields...
                 print('Esto solo se salta una vez')
                 continue
 
