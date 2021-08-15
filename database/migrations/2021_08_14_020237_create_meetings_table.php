@@ -17,13 +17,12 @@ class CreateMeetingsTable extends Migration
             $table->id();
             $table->dateTime('started_at', $precision = 0);
             $table->dateTime('finished_at', $precision = 0);
-            $table->text('observation');
+            $table->text('observation')->nullable();
             $table->integer('meetingable_id');
             $table->string('meetingable_type');
             $table->foreignId('public_employee_id')->constrained();
             $table->foreignId('office_id')->constrained();
             $table->foreignId('reason_id')->constrained();
-            
             $table->timestamps();
         });
     }
