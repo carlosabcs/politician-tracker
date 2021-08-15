@@ -39,7 +39,8 @@ class PoliticianScraper:
         rows = soup.find_all('tr')
 
         # The first rows contain a text with the number of rows
-        assert(len(rows) - 1 == row_count)
+        if len(rows) - 1 == row_count:
+            raise Exception(f'Wrong number of rows, expected: {row_count}')
 
         meetings = []
         for row in rows:
