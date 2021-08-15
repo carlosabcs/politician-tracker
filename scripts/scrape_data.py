@@ -23,15 +23,16 @@ class PoliticianScraper:
         ]
         pass
 
-
     def __get_number_from_string(self, string) -> int:
         return int(re.search(r'\d+', string).group())
 
+    def __date_time_to_single_string(self, date, time) -> str:
+        return f'{date} {time}:00'
 
     def get_presidential_visits(self, date) -> list:
         response = requests.post(
             f"{self.DOMAINS['PRESIDENT']}{self.SERVICES['PRESIDENT']}",
-            data={ 'valorCaja1': date, }
+            data={'valorCaja1': date,}
         )
         soup = BeautifulSoup(response.text, 'html.parser')
         row_count = self.__get_number_from_string(soup.span.text)
@@ -46,6 +47,14 @@ class PoliticianScraper:
                 continue
 
             try:
+                start_time = self.__date_time_to_single_string(
+                    cells[1].text,
+                    cells[8].text
+                )
+                end_time = self.__date_time_to_single_string(
+                    cells[1].text,
+                    cells[9].text
+                )
                 meeting = {
                     'visitor_name': cells[2].text,
                     'visitor_document': cells[3].text,
@@ -54,12 +63,12 @@ class PoliticianScraper:
                     'public_employee_name': cells[6].text,
                     'public_employee_position': cells[7].span.text,
                     'office_name': cells[7].span.previousSibling,
-                    'meeting_start_time': f'{cells[1].text} {cells[8].text}:00',
-                    'meeting_end_time': f'{cells[1].text} {cells[9].text}:00',
+                    'meeting_start_time': start_time,
+                    'meeting_end_time': end_time,
                     'observation': cells[10].text,
                 }
                 meetings.append(meeting)
-            except:
+            except Exception:
                 print('Failed for', row)
                 raise
         return meetings
