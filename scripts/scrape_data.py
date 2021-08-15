@@ -3,17 +3,24 @@ from datetime import datetime, date, timedelta
 import re
 import requests
 
+
 class PoliticianScraper:
 
-    URLS = {
-        'presidential_office': 'https://appw.presidencia.gob.pe/visitas/transparencia/index_server.php?k=sbmtBuscar',
+    DOMAINS = {
+        'PRESIDENT': 'https://appw.presidencia.gob.pe/',
+    }
+
+    SERVICES = {
+        'PRESIDENT': 'visitas/transparencia/index_server.php?k=sbmtBuscar',
     }
 
     def __init__(self, begin_date, end_date) -> None:
         begin_date = datetime.strptime(begin_date, '%d/%m/%Y')
         end_date = datetime.strptime(end_date, '%d/%m/%Y')
         delta = end_date - begin_date
-        self.dates = [ begin_date + timedelta(days=i) for i in range(delta.days + 1) ]
+        self.dates = [
+            begin_date + timedelta(days=i) for i in range(delta.days + 1)
+        ]
         pass
 
 
@@ -23,7 +30,7 @@ class PoliticianScraper:
 
     def get_presidential_visits(self, date) -> list:
         response = requests.post(
-            self.URLS['presidential_office'],
+            f"{self.DOMAINS['PRESIDENT']}{self.SERVICES['PRESIDENT']}",
             data={ 'valorCaja1': date, }
         )
         soup = BeautifulSoup(response.text, 'html.parser')
@@ -56,8 +63,6 @@ class PoliticianScraper:
                 print('Failed for', row)
                 raise
         return meetings
-
-
 
 
 BEGIN_DATE = '28/07/2021'
