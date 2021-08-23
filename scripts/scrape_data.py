@@ -8,10 +8,12 @@ class PoliticianScraper:
 
     DOMAINS = {
         'PRESIDENT': 'https://appw.presidencia.gob.pe/',
+        'PCM': 'https://visitas.servicios.gob.pe/',
     }
 
     SERVICES = {
         'PRESIDENT': 'visitas/transparencia/index_server.php?k=sbmtBuscar',
+        'PCM': 'consultas/dataBusqueda.php',
     }
 
     def __init__(self, begin_date, end_date) -> None:
@@ -29,10 +31,16 @@ class PoliticianScraper:
     def __date_time_to_single_string(self, date, time) -> str:
         return f'{date} {time}:00'
 
+    def __make_request(self, method, endpoint, params=None) -> requests.Response:
+        if method == 'POST':
+            return requests.post(endpoint, data=params)
+        return requests.get(endpoint)
+
     def get_presidential_visits(self, date) -> list:
-        response = requests.post(
+        response = self.__make_request(
+            'POST',
             f"{self.DOMAINS['PRESIDENT']}{self.SERVICES['PRESIDENT']}",
-            data={'valorCaja1': date, }
+            {'valorCaja1': date, }
         )
         soup = BeautifulSoup(response.text, 'html.parser')
         row_count = self.__get_number_from_string(soup.span.text)
@@ -65,7 +73,7 @@ class PoliticianScraper:
                     'meeting_reason': cells[5].text,
                     'public_employee_name': cells[6].text,
                     'public_employee_position': cells[7].span.text,
-                    'office_name': cells[7].span.previousSibling,
+                    'public_employee_office': cells[7].span.previousSibling,
                     'meeting_start_time': start_time,
                     'meeting_end_time': end_time,
                     'observation': cells[10].text,
@@ -76,11 +84,56 @@ class PoliticianScraper:
                 raise
         return meetings
 
+    def get_pcm_visits(self, begin_date, end_date) -> list:
+        response = self.__make_request(
+            'POST',
+            f"{self.DOMAINS['PCM']}{self.SERVICES['PCM']}",
+            {
+                'busqueda': 20168999926,  # RUC of the PCM
+                'fecha': f'{begin_date} - {end_date}',
+            }
+        )
+        response.encoding = "utf-8-sig"
+        decoded_data = response.json()
+        meetings = []
+        try:
+            for meeting in decoded_data['data']:
+                public_employee_info = meeting['funcionario'].split('-')
+                if len(public_employee_info) != 3:
+                    raise Exception(f'Can not decode public employee info')
+                start_time = self.__date_time_to_single_string(
+                    meeting['fecha'],
+                    meeting['horaIn']
+                )
+                end_time = self.__date_time_to_single_string(
+                    meeting['fecha'],
+                    meeting['horaOut']
+                )
+                meetings.append({
+                    'visitor_name': meeting['visitante'],
+                    'visitor_document': None,
+                    'visitor_entity': meeting['rz_empresa'],
+                    'meeting_reason': meeting['motivo'],
+                    'public_employee_name': public_employee_info[0],
+                    'public_employee_position': public_employee_info[2],
+                    'public_employee_office': public_employee_info[1],
+                    'meeting_start_time': start_time,
+                    'meeting_end_time': end_time,
+                    'observation': '',  # No observation found
+                })
+            return meetings
+        except Exception:
+            print('Failed for meeting:', meeting)
+
 
 BEGIN_DATE = '28/07/2021'
 END_DATE = datetime.today().strftime('%d/%m/%Y')
 
 ps = PoliticianScraper(BEGIN_DATE, END_DATE)
+ps.get_pcm_visits(
+    ps.dates[0].strftime('%d/%m/%Y'),
+    ps.dates[-1].strftime('%d/%m/%Y')
+)
 for date in ps.dates:
     print(ps.get_presidential_visits(date.strftime('%d/%m/%Y')))
     break
