@@ -47,15 +47,14 @@ class PoliticianScraper:
         rows = soup.find_all('tr')
 
         # The first rows contain a text with the number of rows
-        if len(rows) - 1 == row_count:
+        if len(rows) - 1 != row_count:
             raise Exception(f'Wrong number of rows, expected: {row_count}')
 
         meetings = []
-        for row in rows:
+        for row in rows[1:]:
             cells = row.find_all('td')
             if len(cells) != 11:  # The number of fields...
-                print('Esto solo se salta una vez')
-                continue
+                raise Exception('Wrong number of fields.')
 
             try:
                 start_time = self.__date_time_to_single_string(
