@@ -31,7 +31,12 @@ class PoliticianScraper:
     def __date_time_to_single_string(self, date, time) -> str:
         return f'{date} {time}:00'
 
-    def __make_request(self, method, endpoint, params=None) -> requests.Response:
+    def __make_request(
+        self,
+        method,
+        endpoint,
+        params=None
+    ) -> requests.Response:
         if method == 'POST':
             return requests.post(endpoint, data=params)
         return requests.get(endpoint)
