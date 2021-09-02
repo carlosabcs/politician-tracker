@@ -2,6 +2,7 @@ from bs4 import BeautifulSoup
 from datetime import datetime, date, timedelta
 import re
 import requests
+import json
 
 
 class PoliticianScraper:
@@ -9,9 +10,11 @@ class PoliticianScraper:
     DOMAINS = {
         'PRESIDENT': 'https://appw.presidencia.gob.pe/',
         'PCM': 'https://visitas.servicios.gob.pe/',
+        'CONGRESS': 'https://wb2server.congreso.gob.pe/',
     }
 
     SERVICES = {
+        'CONGRESS': 'regvisitastransparencia/filtrar',
         'PRESIDENT': 'visitas/transparencia/index_server.php?k=sbmtBuscar',
         'PCM': 'consultas/dataBusqueda.php',
     }
@@ -133,6 +136,37 @@ class PoliticianScraper:
         except Exception:
             print('Failed for meeting:', meeting)
 
+    def get_congress_visits(self, begin_date, end_date) -> list:
+        response = self.__make_request(
+            'POST',
+            f"{self.DOMAINS['CONGRESS']}{self.SERVICES['CONGRESS']}",
+            json.dumps({
+                'fechaDesde': begin_date,
+                'fechaHasta': end_date,
+            })
+        )
+        response.encoding = "utf-8-sig"
+        decoded_data = response.json()
+        meetings = []
+        try:
+            for meeting in decoded_data:
+                meetings.append({
+                    'visitor_name': meeting['entidadVisitanteNombreCompleto'],
+                    'visitor_document': meeting['entidadVisitanteDocumento'],
+                    'visitor_entity': meeting['entidad'],
+                    'meeting_reason': meeting['motivo'],
+                    'public_employee_name': meeting['empleado'],
+                    'public_employee_position': meeting['cargo'],
+                    'public_employee_office': meeting['ubicacion'],
+
+                    'meeting_start_time': meeting['fechaVisitaRecepcion'],
+                    'meeting_end_time': meeting['fechaVisitaTermino'],
+                    'observation': '',  # No observation found
+                })
+            return meetings
+        except Exception:
+            print('Failed for meeting:', meeting)
+
 
 BEGIN_DATE = '28/07/2021'
 END_DATE = datetime.today().strftime('%d/%m/%Y')
@@ -145,3 +179,7 @@ ps.get_pcm_visits(
 for date in ps.dates:
     print(ps.get_presidential_visits(date.strftime('%d/%m/%Y')))
     break
+ps.get_congress_visits(
+    ps.dates[0].strftime('%Y-%m-%d'),
+    ps.dates[-1].strftime('2021-08-27')
+)
