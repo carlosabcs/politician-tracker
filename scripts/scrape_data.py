@@ -16,6 +16,10 @@ class PoliticianScraper:
         'PCM': 'consultas/dataBusqueda.php',
     }
 
+    RUCS = {
+        'PCM': 20168999926,
+    }
+
     def __init__(self, begin_date, end_date) -> None:
         begin_date = datetime.strptime(begin_date, '%d/%m/%Y')
         end_date = datetime.strptime(end_date, '%d/%m/%Y')
@@ -93,7 +97,7 @@ class PoliticianScraper:
             'POST',
             f"{self.DOMAINS['PCM']}{self.SERVICES['PCM']}",
             {
-                'busqueda': 20168999926,  # RUC of the PCM
+                'busqueda': self.RUCS['PCM'],
                 'fecha': f'{begin_date} - {end_date}',
             }
         )
